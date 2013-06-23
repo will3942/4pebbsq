@@ -11,10 +11,10 @@ PBL_APP_INFO(MY_UUID,
              APP_INFO_STANDARD_APP);
 
 typedef struct {
-  char* id;
-	char* name;
-	char* distance;
-	char* people_here;
+  char id[25];
+	char name[50];
+	char distance[10];
+	char people_here[10];
 } FsqVenue;
 
 typedef struct {
@@ -34,7 +34,7 @@ void receive(DictionaryIterator *received, void *context);
 void send_message(char *action, char *params);
 
 void menu_item_selected_callback(struct MenuLayer *menu_layer, MenuIndex *cell_index, void *context) {
-	MenuLib *menu = (MenuLib*)context;
+	MenuLib *menu = &menu_stack[0];
 	send_message("checkin", menu->venues[cell_index->row].id);
 }
 uint16_t mainMenu_get_num_rows_in_section(struct MenuLayer *menu_layer, uint16_t section_index, void *callback_context) {
@@ -44,7 +44,7 @@ uint16_t mainMenu_get_num_sections(struct MenuLayer *menu_layer, void *callback_
 	return 1;
 }
 void mainMenu_draw_row(GContext *ctx, const Layer *cell_layer, MenuIndex *cell_index, void *callback_context) {
-	MenuLib *menu = (MenuLib*)callback_context;
+	MenuLib *menu = &menu_stack[0];
 	menu_cell_basic_draw(ctx, cell_layer, menu->venues[cell_index->row].name, menu->venues[cell_index->row].id, NULL);
 }
 void mainMenu_draw_header(GContext *ctx, const Layer *cell_layer, uint16_t section_index, void *callback_context) {
@@ -65,19 +65,17 @@ void receive(DictionaryIterator *received, void *context) {
 	char* action = dict_find(received, 0)->value->cstring;
 	MenuLib *menu = &menu_stack[0];
 	if (strcmp(action, (char*)"add_venue") == 0) {
-		memset(menu->venues[current_id].id, 0, 25);
-		memset(menu->venues[current_id].name, 0, 25);
-		memset(menu->venues[current_id].distance, 0, 25);
-		memset(menu->venues[current_id].people_here, 0, 25);
-		memcpy(menu->venues[current_id].id, &dict_find(received, 1)->value->cstring, 24);
-		memcpy(menu->venues[current_id].name, &dict_find(received, 2)->value->cstring, 24);
-		memcpy(menu->venues[current_id].distance, &dict_find(received, 3)->value->cstring, 24);
-		memcpy(menu->venues[current_id].people_here, &dict_find(received, 4)->value->cstring, 24);
-		send_message("fur realz", menu->venues[current_id].id);
+		memset(&(menu->venues[current_id].id), 0, 25);
+		memset(&(menu->venues[current_id].name), 0, 50);
+		memset(&(menu->venues[current_id].distance), 0, 10);
+		memset(&(menu->venues[current_id].people_here), 0, 10);
+		memcpy(&(menu->venues[current_id].id), dict_find(received, 1)->value->cstring, 24);
+		memcpy(&(menu->venues[current_id].name), dict_find(received, 2)->value->cstring, 49);
+		memcpy(&(menu->venues[current_id].distance), dict_find(received, 3)->value->cstring, 9);
+		memcpy(&(menu->venues[current_id].people_here), dict_find(received, 4)->value->cstring, 9);
 		current_id ++;
 	}
 	else if (strcmp(action, (char*)"completed_venues") == 0) {
-		send_message("fur lulz", menu->venues[0].id);
 		menu_layer_reload_data(&menu->layer);
 	}
 }
@@ -86,7 +84,7 @@ MenuLayerCallbacks cbacks;
 
 void handle_init(AppContextRef ctx) {
   (void)ctx;
-
+	
   window_init(&window, "Window");
 	MenuLib *menu = &menu_stack[0];
 	menu_layer_init(&menu->layer, GRect(0,0,window.layer.frame.size.w,window.layer.frame.size.h-15));
